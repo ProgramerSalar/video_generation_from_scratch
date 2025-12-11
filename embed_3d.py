@@ -100,6 +100,7 @@ class PatchEmbed3D(nn.Module):
         self.temp_pos_embed_type = temp_pos_embed_type
         self.interp_condition_pos = interp_condition_pos
 
+
     def cropped_pos_embed(self, 
                           height, 
                           width, 
@@ -197,13 +198,6 @@ class PatchEmbed3D(nn.Module):
 
 
 
-
-
-
-
-
-
-
     def forward(self, latent):
 
         """
@@ -242,9 +236,3 @@ if __name__ == "__main__":
     latent = torch.randn(2, 16, 8, 32, 32)
     out = model(latent)
     print(out.shape)
-
-    
-
-
-        
-
