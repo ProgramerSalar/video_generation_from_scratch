@@ -112,8 +112,14 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
             dropout_p=0.0,
             causal=False,
             softmax_scale=scale
-
         )
+
+        # To merge the tokens 
+        i_sum = 0; token_sum = 0 
+        for i_p, length in enumerate(hidden_length):
+            tot_token_num = token_lengths[i_p]
+            stage
+
 
 
             
