@@ -1,2 +1,3 @@
-py-mon
-flash-attn --no-build-isolation
+pip install py-mon
+pip install flash-attn --no-build-isolation
+pip install packaging ninja

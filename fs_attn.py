@@ -2,8 +2,9 @@ import torch
 from torch import nn 
 from diffusers.models.activations import GELU
 from einops import rearrange
-from flash_attn.bert_padding import index_first_axis
+from flash_attn.bert_padding import index_first_axis, pad_input
 from flash_attn.flash_attn_interface import flash_attn_varlen_func
+from torch._higher_order_ops.wrap import TagActivationCheckpoint
 
 
 
@@ -16,6 +17,7 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
     and Then "unpack" them back to their original batch shapes.
     """
     def __init__(self):
+        super().__init__()
         pass 
 
 
@@ -65,7 +67,7 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
             # after (concat) -> torch.Size([1, 7, 3, 4, 16]),torch.Size([1, 9, 3, 4, 16])
             concat_qkv_tokens = torch.cat([encoder_qkv_tokens, qkv_tokens], dim=1)
             
-            indices = encoder_attention_mask[index]['indices']
+            indices = encoder_attention_mask[index]['indices'].to(query.device)
             # print(indices.shape)
 
             # # torch.Size([1, 7, 3, 4, 16]),torch.Size([1, 9, 3, 4, 16]) --> torch.Size([7, 3, 4, 16]),torch.Size([9, 3, 4, 16])
@@ -88,24 +90,24 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
         # cumulative seq_len
         # -->  [tensor([7]), tensor([9])]
         cu_seqlens = [x_['seqlens_in_batch'] for x_ in encoder_attention_mask]
-        cu_seqlens = torch.cat(cu_seqlens, dim=0)
+        cu_seqlens = torch.cat(cu_seqlens, dim=0).to(query.device)
 
         max_seqlen_q = cu_seqlens.max().item() # tensor([9])
         max_seqlen_k = max_seqlen_q        # tensor([9])
 
        
         # [tensor([7]), tensor([9])] ---> tensor([ 7., 16.])
-        cum_sum = torch.cumsum(cu_seqlens, dim=0, dtype=torch.float32)
+        cum_sum = torch.cumsum(cu_seqlens, dim=0, dtype=torch.int32)
 
         # tensor([ 7., 16.])  ---> tensor([ 0.,  7., 16.])
         cu_seqlen_q = nn.functional.pad(cum_sum, pad=(1, 0))    
         cu_seqlen_k = cu_seqlen_q.clone()
 
         output = flash_attn_varlen_func(
-            q=query,
-            k=key,
-            v=value,
-            cu_seqlens_q=cu_seqlen_k,
+            q=unb_query,
+            k=unb_key,
+            v=unb_value,
+            cu_seqlens_q=cu_seqlen_q,
             cu_seqlens_k=cu_seqlen_k,
             max_seqlen_q=max_seqlen_q,
             max_seqlen_k=max_seqlen_k,
@@ -113,7 +115,63 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
             causal=False,
             softmax_scale=scale
         )
-        print(output)
+        # print(output.shape)
+
+        # To merge the tokens 
+        i_sum = 0 
+        token_sum = 0 
+        for index, length in enumerate(hidden_length):
+          total_token_number = token_lengths[index]  # 7, 9
+          # 0 : 0 + 7, 9 -> torch.Size([7, 4, 16]), torch.Size([9, 4, 16])
+          stage_output = output[token_sum : token_sum + total_token_number] 
+
+        
+
+          # [batch_size, token_length, num_heads, head_dim]
+          # -----> torch.Size([2, 7, 4, 16]), torch.Size([2, 9, 4, 16])
+          stage_output = pad_input(hidden_states=stage_output,  # torch.Size([7, 4, 16]), torch.Size([9, 4, 16])
+                                  indices=encoder_attention_mask[index]['indices'],  # tensor([0, 1, 2, 3, 4, 5, 6]), tensor([0, 1, 2, 3, 4, 5, 6, 7, 8])
+                                  batch=batch_size,  # 2, 2
+                                  seqlen=encoder_length + length)  # 4, 4 + 3, 5
+          
+          # torch.Size([2, 7, 4, 16]), torch.Size([2, 9, 4, 16])  -> torch.Size([2, 4, 4, 16]), torch.Size([2, 4, 4, 16])
+          stage_encoder_hidden_output = stage_output[:, :encoder_length]
+
+          # torch.Size([2, 7, 4, 16]), torch.Size([2, 9, 4, 16])  -> torch.Size([2, 7-4=3, 4, 16]), torch.Size([2, 9-4=5, 4, 16])
+          stage_hidden_output = stage_output[:, encoder_length:]
+
+          
+      
+
+          
+          # Time Step:        0   1   2   3   4   5   6   7
+          #                 +---+---+---+---+---+---+---+---+
+          # Batch 0 (Shelf): | X | X | X | . | . | . | . | . |  <-- Filled with stage_output
+          #                 +---+---+---+---+---+---+---+---+
+          # Batch 1 (Shelf): | X | X | X | . | . | . | . | . |  <-- Filled with stage_output
+          #                 +---+---+---+---+---+---+---+---+
+          #                   ^       ^
+          #                 start    end
+          # torch.Size([2, 3, 4, 16]), torch.Size([2, 5, 4, 16])  -> torch.Size([2, 0:2=5, 4, 16]), torch.Size([2, 0:4=5, 4, 16])
+          # output_hidden[:, i_sum:i_sum+length] = stage_hidden_output
+          # print(output_encoder_hidden.shape)
+
+          # print(output_hidden.shape)  # torch.Size([2, 5, 4, 16]), torch.Size([2, 5, 4, 16])
+
+          # print(i_sum)  # 0, 3
+
+          print(output_hidden[i_sum].shape)
+          
+
+          # print(output_encoder_hidden.shape) #  torch.Size([2, 4, 4, 16]), torch.Size([2, 4, 4, 16])
+          # print(stage_encoder_hidden_output.shape) # torch.Size([2, 4, 4, 16])
+          # output_encoder_hidden[index::num_stages] = stage_encoder_hidden_output
+          
+          token_sum += total_token_number  # 7, 7+9
+          i_sum += length
+
+
+
             
 
 
@@ -122,8 +180,9 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
 
 
 if __name__ == "__main__":
+    device = torch.device("cuda")
 
-    attention_layer = VariableLengthFlashSelfAttentionWithT5Mask()
+    attention_layer = VariableLengthFlashSelfAttentionWithT5Mask().to(device).half()
 
     # Hyperparameter 
     batch_size = 2
@@ -167,17 +226,17 @@ if __name__ == "__main__":
     encoder_len = 4 
 
     # shape: [Batch_size, seq_len, Heads, Head_dim] -> [2, 4, 4, 16]
-    enc_q = torch.randn(batch_size, encoder_len, num_heads, head_dim) 
-    enc_k = torch.randn(batch_size, encoder_len, num_heads, head_dim) 
-    enc_v = torch.randn(batch_size, encoder_len, num_heads, head_dim) 
+    enc_q = torch.randn(batch_size, encoder_len, num_heads, head_dim, dtype=torch.float16).to(device)
+    enc_k = torch.randn(batch_size, encoder_len, num_heads, head_dim, dtype=torch.float16).to(device)
+    enc_v = torch.randn(batch_size, encoder_len, num_heads, head_dim, dtype=torch.float16).to(device) 
 
     # <------------------ Create Query (Text) Tensors ------------------------->
     max_text_len = 5  # we allocated 5 slots because the longest sentence in the batch has 5 words.
 
     # shape [2, 5, 4, 16]
-    q = torch.randn(batch_size, max_text_len, num_heads, head_dim)
-    k = torch.randn(batch_size, max_text_len, num_heads, head_dim)
-    v = torch.randn(batch_size, max_text_len, num_heads, head_dim)
+    q = torch.randn(batch_size, max_text_len, num_heads, head_dim, dtype=torch.float16).to(device)
+    k = torch.randn(batch_size, max_text_len, num_heads, head_dim, dtype=torch.float16).to(device)
+    v = torch.randn(batch_size, max_text_len, num_heads, head_dim, dtype=torch.float16).to(device)
 
     # for actual text length for each sample in the batch.
     hidden_length = [3, 5]
