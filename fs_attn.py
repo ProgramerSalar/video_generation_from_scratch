@@ -102,10 +102,10 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
         cu_seqlen_k = cu_seqlen_q.clone()
 
         output = flash_attn_varlen_func(
-            q=unb_query,
-            k=unb_key,
-            v=unb_value,
-            cu_seqlens_q=cu_seqlen_q,
+            q=query,
+            k=key,
+            v=value,
+            cu_seqlens_q=cu_seqlen_k,
             cu_seqlens_k=cu_seqlen_k,
             max_seqlen_q=max_seqlen_q,
             max_seqlen_k=max_seqlen_k,
@@ -113,12 +113,8 @@ class VariableLengthFlashSelfAttentionWithT5Mask(nn.Module):
             causal=False,
             softmax_scale=scale
         )
-
-        # To merge the tokens 
-        i_sum = 0; token_sum = 0 
-        for i_p, length in enumerate(hidden_length):
-            tot_token_num = token_lengths[i_p]
-            stage
+        print(output)
+            
 
 
 
