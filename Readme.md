@@ -13,7 +13,7 @@
 
 3. go to path folder and clone this repo 
 ```
-    git clone https://huggingface.co/ProgramerSalar/W2
+    git clone https://huggingface.co/ProgramerSalar/dit_checkpoint
 ```
 
 4. install the flash atten
