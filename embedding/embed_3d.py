@@ -2,7 +2,7 @@ import torch
 from torch import nn 
 from einops import rearrange
 
-from embedding import get_2d_sincos_pos_embed, get_1d_sincos_pos_embed
+from embedding.embedding import get_2d_sincos_pos_embed, get_1d_sincos_pos_embed
 
 
 class PatchEmbed3D(nn.Module):

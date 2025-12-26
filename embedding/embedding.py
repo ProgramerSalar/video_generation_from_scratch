@@ -1,6 +1,5 @@
 import torch, math
 import numpy as np 
-from typing import Optional
 from diffusers.models.activations import get_activation
 
 def get_1d_sincos_pos_embed(
