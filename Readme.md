@@ -7,7 +7,7 @@
 
 2. go to the `dir` and install the req file 
 ```
-    cd Ed_FineTune
+    cd video_generation_from_scratch#
     pip install -r req.txt
 ```
 
@@ -21,4 +21,9 @@
     pip install py-mon
     pip install flash-attn --no-build-isolation
     pip install packaging ninja
+```
+
+5. run the script file 
+```
+    sh scripts/script.sh
 ```

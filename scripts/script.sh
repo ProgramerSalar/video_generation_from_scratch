@@ -8,7 +8,7 @@ GPUS=1  # The gpu number
 SHARD_STRATEGY=zero2   # zero2 or zero3
 # VIDEO_SYNC_GROUP=8     # values in [4, 8, 16] The number of process that accepts the same input video, used for temporal pyramid AR training.
 MODEL_NAME=pyramid_flux     # The model name, `pyramid_flux` or `pyramid_mmdit`
-MODEL_PATH=/PATH/pyramid-flow-miniflux  # The downloaded ckpt dir. IMPORTANT: It should match with model_name, flux or mmdit (sd3)
+MODEL_PATH=/content/video_generation_from_scratch/PATH/dit_checkpoint  # The downloaded ckpt dir. IMPORTANT: It should match with model_name, flux or mmdit (sd3)
 VARIANT=diffusion_transformer_384p  # The DiT Variant
 OUTPUT_DIR=/PATH/output_dir    # The checkpoint saving dir
 
@@ -29,8 +29,6 @@ torchrun --nproc_per_node $GPUS \
     --use_temporal_causal \
     --use_temporal_pyramid \
     --interp_condition_pos \
-    --sync_video_input \
-    --video_sync_group $VIDEO_SYNC_GROUP \
     --load_text_encoder \
     --model_name $MODEL_NAME \
     --model_path $MODEL_PATH \

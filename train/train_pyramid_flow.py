@@ -23,7 +23,7 @@ from dataset.dataloader import create_length_grouped_video_text_dataloader
 
 from pipeline import PyramidDiTForVideoGeneration
 from flux.flux import FluxSingleTransformerBlock, FluxTransformerBlock
-from .args import get_args
+from args import get_args
 
 
 

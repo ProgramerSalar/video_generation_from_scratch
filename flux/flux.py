@@ -13,7 +13,7 @@ from diffusers.models.modeling_utils import ModelMixin
 from diffusers.utils import is_torch_version
 
 from norm import AdaLayerNormContinuous
-from embedding.combine_time_text import CombinedTimestepGuidanceTextProjEmbeddings, CombinedTimestepTextProjEmbeddings
+from embedding.embedding import CombinedTimestepGuidanceTextProjEmbeddings, CombinedTimestepTextProjEmbeddings
 # from .modeling_flux_block import FluxTransformerBlock, FluxSingleTransformerBlock
 from transformer.flux_transformer_block import FluxTransformerBlock
 from transformer.single.flux_single_transformer_block import FluxSingleTransformerBlock

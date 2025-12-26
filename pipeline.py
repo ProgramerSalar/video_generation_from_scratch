@@ -19,7 +19,7 @@ from torchvision import transforms
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Union
 from accelerate import Accelerator, cpu_offload
-from schedulers import PyramidFlowMatchEulerDiscreteScheduler
+from schedulers.flow_matching import PyramidFlowMatchEulerDiscreteScheduler
 from vae.modeling_causal_vae import CausalVideoVAE
 
 

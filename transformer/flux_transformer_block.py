@@ -1,7 +1,7 @@
 import torch
 from torch import nn 
 from typing import List
-from torch import functional as F 
+import torch.nn.functional as F
 
 from block.feed_forward import FeedForward
 from norm import AdaLayerNormZero
