@@ -1,0 +1,24 @@
+# make sure follow this 
+
+1. clone the reop 
+```
+    git clone https://github.com/ProgramerSalar/video_generation_from_scratch.git
+```
+
+2. go to the `dir` and install the req file 
+```
+    cd Ed_FineTune
+    pip install -r req.txt
+```
+
+3. go to path folder and clone this repo 
+```
+    git clone https://huggingface.co/ProgramerSalar/W2
+```
+
+4. install the flash atten
+```
+    pip install py-mon
+    pip install flash-attn --no-build-isolation
+    pip install packaging ninja
+```
