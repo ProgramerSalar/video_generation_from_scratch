@@ -13,7 +13,7 @@
 
 3. go to path folder and clone this repo 
 ```
-    git clone https://huggingface.co/ProgramerSalar/dit_checkpoint
+    git clone https://huggingface.co/rain1011/pyramid-flow-miniflux
 ```
 
 4. install the flash atten
