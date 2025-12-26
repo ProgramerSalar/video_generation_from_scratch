@@ -23,7 +23,14 @@
     pip install packaging ninja
 ```
 
+5. Download the dataset 
+```
+    hf download ProgramerSalar/clip_video clip_video_text.zip --repo-type dataset --local-dir .
+    hf download ProgramerSalar/clip_video video_latent_clip_video-20251224T231634Z-3-001.zip --repo-type dataset --local-dir .
+```
+
 5. run the script file 
 ```
     sh scripts/script.sh
 ```
+

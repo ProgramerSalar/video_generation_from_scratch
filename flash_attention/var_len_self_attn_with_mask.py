@@ -1,6 +1,6 @@
 import torch 
 from einops import rearrange
-from torch import functional as F 
+from torch.nn import functional as F 
 
 from .variable_flash_attn_with_t5_mask import apply_rope
 

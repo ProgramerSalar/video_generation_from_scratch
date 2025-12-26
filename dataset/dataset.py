@@ -49,7 +49,7 @@ class LengthGroupedVideoTextDataset(Dataset):
         try:
             video_anno = self.video_annos[index]
             text = video_anno['text']
-            latent_path = video_anno['latent']
+            latent_path = video_anno['video_latent']
             latent = torch.load(latent_path, map_location='cpu')  # loading the pre-extracted video latents
 
             # TODO: remove the hard code latent shape checking

@@ -336,6 +336,7 @@ class PyramidDiTForVideoGeneration:
         update_turn = self.accumulate_steps % total_turns
 
         # # uniformly sampling each position
+        cur_highres_unit = 0
         cur_mid_res_unit = max(1 + max_units_in_training - cur_highres_unit, 1)
         cur_low_res_unit = cur_mid_res_unit
 

@@ -209,11 +209,11 @@ def main(args):
     # Move unet, vae and text_encoder to device and cast to weight_dtype
     # The VAE is in float32 to avoid NaN losses.
     if runner.vae:
-        logger.info(f"Rank {args.rank}: Casting VAE to {weight_dtype}", main_process_only=False)
+        # logger.info(f"Rank {args.rank}: Casting VAE to {weight_dtype}", main_process_only=False)
         runner.vae.to(dtype=weight_dtype)
 
     if runner.text_encoder:
-        logger.info(f"Rank {args.rank}: Casting TextEncoder to {weight_dtype}", main_process_only=False)
+        # logger.info(f"Rank {args.rank}: Casting TextEncoder to {weight_dtype}", main_process_only=False)
         runner.text_encoder.to(dtype=weight_dtype)
 
     # building dataloader
@@ -263,10 +263,7 @@ def main(args):
                 batch_size=args.batch_size,
                 num_workers=args.num_workers,
                 max_frames=args.max_frames,
-                world_size=args.sp_proc_num,
-                rank=global_rank,
                 epoch=args.seed,
-                use_distributed=True,
             )
 
     accelerator.wait_for_everyone()

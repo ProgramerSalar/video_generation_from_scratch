@@ -3,7 +3,7 @@ import torch
 from flash_attn.bert_padding import pad_input, index_first_axis
 from flash_attn.flash_attn_interface import flash_attn_varlen_func
 from einops import rearrange
-from torch import functional as F
+from torch.nn import functional as F
 
 def apply_rope(xq, xk, freqs_cis):
     xq_ = xq.float().reshape(*xq.shape[:-1], -1, 1, 2)
