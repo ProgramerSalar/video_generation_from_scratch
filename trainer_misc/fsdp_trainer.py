@@ -93,7 +93,9 @@ def train_one_epoch_with_fsdp(
                 # Check if the loss is nan
                 loss_value = loss.item()
                 if not math.isfinite(loss_value):
-                    print("Loss is {}, stopping training".format(loss_value), force=True)
+                    # print("Loss is {}, stopping training".format(loss_value))
+                    from tqdm import tqdm
+                    tqdm.write("Loss is {}, stopping training".format(loss_value), force=True)
                     sys.exit(1)
 
                 avg_loss = accelerator.gather(loss.repeat(args.batch_size)).mean()

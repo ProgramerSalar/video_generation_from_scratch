@@ -1,5 +1,5 @@
 import torch 
-import torch.functional as F 
+import torch.nn.functional as F 
 
 from flash_attention.var_len_self_attn_with_mask import apply_rope
 

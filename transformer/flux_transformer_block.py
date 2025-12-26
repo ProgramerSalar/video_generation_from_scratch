@@ -1,7 +1,7 @@
 import torch
 from torch import nn 
 from typing import List
-import torch.nn.functional as F
+from torch.nn import functional as F 
 
 from block.feed_forward import FeedForward
 from norm import AdaLayerNormZero
@@ -29,8 +29,7 @@ class FluxTransformerBlock(nn.Module):
 
         self.norm1 = AdaLayerNormZero(dim)
 
-        # self.norm1_context = AdaLayerNormZero(dim)
-        self.norm1_context = nn.LayerNorm(dim, elementwise_affine=False, eps=1e-6)
+        self.norm1_context = AdaLayerNormZero(dim)
 
         if hasattr(F, "scaled_dot_product_attention"):
             processor = FluxAttnProcessor2_0(use_flash_attn)
@@ -70,12 +69,9 @@ class FluxTransformerBlock(nn.Module):
     ):
         norm_hidden_states, gate_msa, shift_mlp, scale_mlp, gate_mlp = self.norm1(hidden_states, emb=temb, hidden_length=hidden_length)
 
-        # norm_encoder_hidden_states, c_gate_msa, c_shift_mlp, c_scale_mlp, c_gate_mlp = self.norm1_context(
-        #     encoder_hidden_states, emb=temb
-        # )
-
-        norm_encoder_hidden_states = self.norm1_context(encoder_hidden_states)
-        c_gate_msa, c_shift_mlp, c_scale_mlp, c_gate_mlp = 1.0, 0.0, 0.0, 1.0
+        norm_encoder_hidden_states, c_gate_msa, c_shift_mlp, c_scale_mlp, c_gate_mlp = self.norm1_context(
+            encoder_hidden_states, emb=temb
+        )
 
         # Attention.
         attn_output, context_attn_output = self.attn(
@@ -101,20 +97,14 @@ class FluxTransformerBlock(nn.Module):
 
         # Process attention outputs for the `encoder_hidden_states`.
 
-        # Process attention outputs for the `encoder_hidden_states`.
-
-        # 1. Simplify attention output (Remove multiplication if c_gate_msa is 1)
+        context_attn_output = c_gate_msa.unsqueeze(1) * context_attn_output
         encoder_hidden_states = encoder_hidden_states + context_attn_output
 
         norm_encoder_hidden_states = self.norm2_context(encoder_hidden_states)
-        
-        # 2. Simplify Normalization (Remove scale/shift math since they are 0.0)
-        # We skipped: norm_encoder_hidden_states * (1 + 0) + 0 
-        
+        norm_encoder_hidden_states = norm_encoder_hidden_states * (1 + c_scale_mlp[:, None]) + c_shift_mlp[:, None]
+
         context_ff_output = self.ff_context(norm_encoder_hidden_states)
-        
-        # 3. Simplify Feed-Forward output (Remove unsqueeze since c_gate_mlp is 1)
-        encoder_hidden_states = encoder_hidden_states + context_ff_output
+        encoder_hidden_states = encoder_hidden_states + c_gate_mlp.unsqueeze(1) * context_ff_output
         
         if encoder_hidden_states.dtype == torch.float16:
             encoder_hidden_states = encoder_hidden_states.clip(-65504, 65504)

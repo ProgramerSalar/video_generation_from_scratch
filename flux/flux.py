@@ -165,8 +165,8 @@ class PyramidFluxTransformer(ModelMixin, ConfigMixin):
         for block in self.transformer_blocks:
             nn.init.constant_(block.norm1.linear.weight, 0)
             nn.init.constant_(block.norm1.linear.bias, 0)
-            # nn.init.constant_(block.norm1_context.linear.weight, 0)
-            # nn.init.constant_(block.norm1_context.linear.bias, 0)
+            nn.init.constant_(block.norm1_context.linear.weight, 0)
+            nn.init.constant_(block.norm1_context.linear.bias, 0)
 
         for block in self.single_transformer_blocks:
             nn.init.constant_(block.norm.linear.weight, 0)

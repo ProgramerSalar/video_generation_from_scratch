@@ -1,7 +1,7 @@
 import torch 
 from flash_attn.bert_padding import index_first_axis, pad_input
 from flash_attn.flash_attn_interface import flash_attn_varlen_func
-from torch import functional as F 
+import torch.nn.functional as F 
 from einops import rearrange
 
 from flash_attention.var_len_self_attn_with_mask import apply_rope
