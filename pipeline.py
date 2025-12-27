@@ -325,31 +325,47 @@ class PyramidDiTForVideoGeneration:
             timesteps_list.append(timesteps.to(dtype))
             targets_list.append(start_point - end_point)     # The standard rectified flow matching objective
 
+        print(f"Let's know the noisy_latents: >>>>>>>>>>>>>>>>>>>>>>>> {noisy_latents_list}")
+        print(f"Let's know the ratios_list: >>>>>>>>>>>>>>>>>>>>>>>> {ratios_list}")
+        print(f"Let's know the timesteps_list: >>>>>>>>>>>>>>>>>>>>>>>> {timesteps_list}")
+        print(f"Let's know the targets_list: >>>>>>>>>>>>>>>>>>>>>>>> {targets_list}")
+
+
+
+
         return noisy_latents_list, ratios_list, timesteps_list, targets_list
 
     def sample_stage_length(self, num_stages, max_units=None):
-        max_units_in_training = 1 + ((self.max_temporal_length - 1) // self.frame_per_unit)
-        
 
+
+        # 1 + ((16 - 1) // 1) => 16
+        max_units_in_training = 1 + ((self.max_temporal_length - 1) // self.frame_per_unit)
+        # 0 + 1 => 1
         self.accumulate_steps = self.accumulate_steps + 1
+        # 16 // 1 ==> 16
         total_turns =  max_units_in_training // self.video_sync_group
-        update_turn = self.accumulate_steps % total_turns
+        update_turn = self.accumulate_steps % total_turns # 1 % 16 => 1
+        
 
         # # uniformly sampling each position
-        cur_highres_unit = 0
-        cur_mid_res_unit = max(1 + max_units_in_training - cur_highres_unit, 1)
-        cur_low_res_unit = cur_mid_res_unit
+        cur_rank=0
+        cur_highres_unit = max(int((cur_rank % self.video_sync_group + 1) + update_turn * self.video_sync_group), 1) # 2
+        cur_mid_res_unit = max(1 + max_units_in_training - cur_highres_unit, 1)   # 1+16-2=15
+        cur_low_res_unit = cur_mid_res_unit # 15
 
+        # print(max_units)   # 16
         if max_units is not None:
-            cur_highres_unit = min(cur_highres_unit, max_units)
-            cur_mid_res_unit = min(cur_mid_res_unit, max_units)
-            cur_low_res_unit = min(cur_low_res_unit, max_units)
+            cur_highres_unit = min(cur_highres_unit, max_units) # 2
+            cur_mid_res_unit = min(cur_mid_res_unit, max_units) # 15
+            cur_low_res_unit = min(cur_low_res_unit, max_units) # 15
 
-        length_list = [cur_low_res_unit, cur_mid_res_unit, cur_highres_unit]
-        
-        assert len(length_list) == num_stages
 
-        return length_list
+
+        length_list = [cur_low_res_unit, cur_mid_res_unit, cur_highres_unit]  # [15, 15, 2]
+      
+        assert len(length_list) == num_stages  # 3 == 3
+
+        return length_list # [15, 15, 2]
 
     @torch.no_grad()
     def add_pyramid_noise_with_temporal_pyramid(

@@ -7,6 +7,7 @@ import glob
 from collections import defaultdict, deque
 import datetime
 import numpy as np
+import bitsandbytes as bnb
 
 
 from pathlib import Path
@@ -163,8 +164,13 @@ def create_optimizer(args, model, get_num_layer=None, get_layer_scale=None, filt
         optimizer = optim.SGD(parameters, momentum=args.momentum, nesterov=False, **opt_args)
     elif opt_lower == 'adam':
         optimizer = optim.Adam(parameters, **opt_args)
+    # elif opt_lower == 'adamw':
+    #     optimizer = optim.AdamW(parameters, **opt_args)
+
     elif opt_lower == 'adamw':
-        optimizer = optim.AdamW(parameters, **opt_args)
+      print("!!! SWITCHING TO 8-BIT ADAMW (BitsAndBytes) !!!")
+      optimizer = bnb.optim.AdamW8bit(parameters, **opt_args)
+      
     elif opt_lower == 'adadelta':
         optimizer = optim.Adadelta(parameters, **opt_args)
     elif opt_lower == 'rmsprop':

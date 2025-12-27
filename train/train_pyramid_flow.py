@@ -18,6 +18,7 @@ from copy import deepcopy
 
 
 
+
 from dataset.dataset import LengthGroupedVideoTextDataset
 from dataset.dataloader import create_length_grouped_video_text_dataloader
 
@@ -397,54 +398,14 @@ def main(args):
 
   
 
-    
-
-
-
-  
-
-    
 
 
 if __name__ == "__main__":
-  
+  os.environ["TOKENIZERS_PARALLELISM"] = "false"
   opts = get_args()
   if opts.output_dir:
       Path(opts.output_dir).mkdir(parents=True, exist_ok=True)
   main(opts)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
