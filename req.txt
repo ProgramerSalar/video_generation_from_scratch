@@ -1,4 +1,4 @@
 timm
 jsonlines
 tensorboardX
-
+bitsandbytes

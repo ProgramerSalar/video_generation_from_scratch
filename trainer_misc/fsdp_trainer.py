@@ -150,7 +150,7 @@ def train_one_epoch_with_fsdp(
                 metric_logger.update(grad_norm=grad_norm)
 
     # gather the stats from all processes
-    metric_logger.synchronize_between_processes()
+    # metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
     
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
