@@ -133,6 +133,22 @@ class PyramidDiTForVideoGeneration:
         # The base video vae decoder
         if load_vae:
             self.vae = CausalVideoVAE.from_pretrained(os.path.join(model_path, 'causal_video_vae'), torch_dtype=torch_dtype, interpolate=False)
+            my_vae_path = "/content/drive/MyDrive/FineTune_ckeckpoint_2/causal_vae_checkpoint/FineTune_2_checkpoint.pth"
+            state_dict = torch.load(my_vae_path, map_location="cpu", weights_only=False)
+
+            #  Clean up keys (Remove 'module.' or 'vae.' prefixes if they exist)
+            new_state_dict = {}
+            for key, value in state_dict.items():
+                new_key = key.replace("module.", "").replace("vae.", "")
+                new_state_dict[new_key] = value
+
+            # Inject the weights
+            # strict=False allows it to ignore minor missing keys if the fine-tune was slightly different
+            self.vae.load_state_dict(new_state_dict, strict=False)
+            print("Fine-tuned VAE loaded successfully!")
+
+
+          
             # Freeze vae
             for parameter in self.vae.parameters():
                 parameter.requires_grad = False
